@@ -1,0 +1,303 @@
+---
+title: "How factors affecting borrower profiles and default risk changed: 2007 vs 2019"
+author: Emil George Mathew
+format: html
+output: bookdown::html_document2
+toc: false
+editor: visual
+---
+
+```{=html}
+<!This block assists in formatting the title, font size, chart caption, etc.– –>
+<style type="text/css">
+  .title {
+    text-align: left;
+}
+body{ /* Normal  */
+      font-size: 16px;
+      margin: 2.5cm;
+      top: 1.5cm;
+      text-align: justify;
+  }
+  .caption {
+    font-size: big;
+    text-align: center;
+    position: above;
+}
+</style>
+```
+
+```{css plotly-caption, echo = FALSE}
+/*Include this block if you like the chart caption at the top instead of the bottom.*/
+div.figure {
+  display: table;
+}
+div.figure p {
+  display: table-caption;
+  caption-side: top;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+------------------------------------------------------------------------
+
+**INTRODUCTION**
+
+In this report, we analyze Fannie Mae’s loan performance data to explore shifts in borrower behavior, loan characteristics, and default trends. To do this, we compare mortgages originated in Q4 2007 during the subprime mortgage crisis and before the COVID-19 pandemic in Q4 2019. We can understand the changes using visualizations and interactive charts, where we aim to provide insights for risk management and decision-making in the mortgage finance sector.
+
+Using this dataset, our focus is to understand the major factors that changed in the these years as times changed especially during peak crisis or even an unforeseen pandemic.
+
+**DATA VISUALIZATIONS AND FINDINGS**
+
+Figure \@ref(fig:patchworkmaps), In this chart, we analyze how the distribution of FICO scores among borrowers has shifted significantly from 2007 to 2019:
+
+-   In 2007 Q4, the distribution was wider and flatter, with a substantial number of borrowers having credit scores below 700. This indicates more risky lending practices during the pre-crisis period.
+
+-   In 2019 Q4, the distribution is more concentrated around the 750–800 range, reflecting stricter lending standards and a focus on more creditworthy borrowers.
+
+-   Overall, 2019 loans were issued to borrowers with higher and more consistent credit scores, suggesting improved credit risk management post-crisis which is exactly opposite of the what the 2007Q4 data suggests.
+
+The boxplot in the figure \@ref(fig:dtiboxplot) highlights a noticeable shift in debt-to-income (DTI) ratios between 2007 and 2019, we:
+
+-   In 2007 Q4, borrowers had higher and more variable DTI ratios. This means that there were looser lending standards.
+
+-   By 2019 Q4, DTI ratios reduced and more consistent. This could be due to the fact that lenders learned from the crisis and improved their process.
+
+-   The reduction in extreme DTI outliers in 2019 further reflects improved risk controls in post-crisis years.
+
+The bar chart from this figure \@ref(fig:plotloanpurpose) compares the types of loans originated in Q4 2007 and Q4 2019:
+
+In 2007, Cash-Out Refinance loans were more compared to other categories, reflecting borrower the demand to tap home equity pre-crisis. This changed in 2019 where Rate-Term Refinance and Purchase loans became more prominent, it is an evident shift signaling towards traditional refinancing and home buying. This suggests more conservative borrowing behavior and tighter lending standards after the financial crisis.
+
+As part of our next analysis, we look at figure \@ref(fig:violinplot) narrow down to two well-known lenders or in this case called "SELLER", Bank of America(BofA) and JPMorgan. Both are very large banking institutions in the United States of America. Let's go over each one, one-by-one.
+
+**Bank of America:** The distribution of debt-to-income (DTI) ratios among loans sold by Bank of America is wide, also in the 35% and 50% DTI% range borrowers, there is a notable concentration. The shape of the violin plot indicates that Bank of America originated loans to a broader range of borrowers, even for a noticeable portion with higher DTI levels. This suggests a more flexible lending approach and potentially a higher risk appetite in its underwriting strategy. BofA seems to be more accessible when it comes to borrowing.
+
+**JPMorgan:** In contrast, JPMorgan appears to be more selective, with a pronounced peak around the 40–45% range. The plot reflects a tighter clustering of borrower DTI values, indicating more consistent and controlled lending practices. The narrower distribution implies that JPMorgan was likely more selective with borrower qualifications, possibly emphasizing lower risk and stricter financial standards.
+
+Thus, JPMorgan tends to analyse borrowers better compared Bank of America, stricter standards mean less flexibility.
+
+From this figure \@ref(fig:animatets) , we can see that there is a dramatic spike in mortgage default rates leading up to and immediately following the 2008 financial crisis, with the peak occurring around 2009. This surge reflects the collapse of risky lending practices and the broader housing market crash.
+
+After 2010, there is a sharp decline of the default rates and remained relatively low and stable through 2020. From this, we can understand that it is suggesting the impact of post-crisis reforms, better standards, and improved borrower credit quality in the future years.
+
+The U.S. map in this figure \@ref(fig:interactive-map) shows geographic visualization in the mortgage loan defaults, with the state of California reporting the highest number of defaults ranking it the number one. The color highlights the state in dark red. Other states with notable default activity include Texas, Florida, and New York, probably because these areas have large loan volumes and potentially higher housing market volatility.
+
+However, many Midwestern and Mountain West states show relatively low default rates, suggesting more stable borrower behavior in such regions. The data illustrates a clear regionaldisparity in loan performance across the country.
+
+**CONCLUSION**
+
+To conclude, in our analysis, there is key differences in mortgage lending patterns and borrower profiles between 2007 and 2019. Over the years, lending standards is evident to be tightened significantly, as seen in higher credit scores, lower DTI ratios, and a shift in loan purposes toward more stable refinancing and purchases. Default rates had peaked during the 2008 crisis but have remained low in the following decade, reflecting improved risk management. Geographic maps also suggest that there are concentrated areas of loan defaults, emphasizing the importance of location-specific insights in mortgage risk assessment. Overall, we can understand and clearly see how Fannie Mae's lending evolved in response to past financial instability.
+
+(Word count: 737)
+
+### Figure Appendix {.unnumbered}
+
+```{r, include = FALSE}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(patchwork)
+library(lubridate)
+library(gganimate)
+library(usmap)
+library(ggiraph)
+library(plotly)
+```
+
+```{r, include = FALSE}
+data_2007 <- read_rds("data_sample_2007Q4.rds")
+data_2019 <- read_rds("data_sample_2019Q4.rds")
+```
+
+```{r, include = FALSE}
+data_2007 <- data_2007 %>% mutate(Year = "2007Q4")
+data_2019 <- data_2019 %>% mutate(Year = "2019Q4")
+
+#combining the datasets.
+combined_data <- bind_rows(data_2007, data_2019)
+
+#fetching the given time series data and fixing the formats especially the date.
+ts_data <- read_csv("default_rate_ts.csv")
+ts_data$Date <- as.Date(ts_data$Date, format = "%m/%d/%Y")
+ts_data$Year <- year(ts_data$Date)
+```
+
+```{r, defining interactive map data and variable, include = FALSE}
+stateLookup <- data.frame(
+  stateAbbreviation = state.abb, state = state.name)
+mapData_2019 <- data_2019 %>%
+  mutate(STATE = toupper(STATE))
+
+mapData_2019 <- left_join(mapData_2019, stateLookup, by = c("STATE" = "stateAbbreviation"))
+
+stateData <- mapData_2019 %>%
+  group_by(state) %>%
+  summarise(total_defaults = sum(DEFAULT_FLAG, na.rm = TRUE), avg_interest_rate = round(mean(ORIG_RATE, na.rm = TRUE), 2),avg_dti = round(mean(DTI, na.rm = TRUE), 1)) %>%
+  arrange(desc(total_defaults)) %>%  
+  mutate(rank = row_number(),default_label = paste0("State: ", state, "\n",
+                                  "Loan Defaults: ",total_defaults, "\n","Rank: ", rank))
+```
+
+```{r patchworkmaps, echo = FALSE, fig.width=10, fig.height = 6, fig.cap="Plot1"}
+hist1 <- ggplot(data_2007, aes(x = CSCORE_B, fill = Year)) +
+  geom_histogram(alpha = 0.8, binwidth = 8, position = "identity", color = "white") +
+  scale_y_continuous(breaks = seq(0, 4500, 1000), limits = c(0, 4500), expand = c(0, 0)) +
+  scale_x_continuous(breaks = seq(550, 850, 50), limits = c(550, 850), expand = c(0, 0)) +
+  scale_fill_manual(values = c("2007Q4" = "#E76F51")) +
+  labs(title = "2007Q4", x = "Credit Score (FICO)", y = "Number of Borrowers") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
+
+hist2 <- ggplot(data_2019, aes(x = CSCORE_B, fill = Year)) +
+  geom_histogram(alpha = 0.8, binwidth = 8, position = "identity", color = "white") +
+  scale_y_continuous(breaks = seq(0, 4500, 1000), limits = c(0, 4500), expand = c(0, 0)) +
+  scale_x_continuous(breaks = seq(550, 850, 50), limits = c(550, 850), expand = c(0, 0)) +
+  scale_fill_manual(values = c("2019Q4" = "#2A9D8F")) +
+  labs(title = "2019Q4", x = "Credit Score (FICO)", y = NULL) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
+
+#combine to make it appear side by side
+(hist1 | hist2) + plot_annotation(title = "Borrower Credit Score Distribution: 2007 vs 2019",
+                  subtitle = "Distribution of FICO scores for originated loans") & 
+  theme(plot.title = element_text(size = 18, face = "bold"),
+        plot.subtitle = element_text(size = 14),
+        axis.line = element_line(color = "black", size = 0.5))
+```
+
+```{r dtiboxplot, fig.width=8, fig.height=5, echo = FALSE, fig.cap="Plot2"}
+# Clean DTI data
+dti_data <- combined_data %>%
+  filter(!is.na(DTI), DTI > 0 & DTI <= 60)  # filter out bad or extreme values
+
+# Plot
+ggplot(dti_data, aes(x = Year, y = DTI, fill = Year)) +
+  geom_boxplot(alpha = 0.8, outlier.alpha = 0.1) +
+  scale_fill_manual(values = c("2007Q4" = "#E76F51", "2019Q4" = "#2A9D8F")) +
+  labs(title = "Debt-to-Income Ratio Comparison",
+       subtitle = "Distribution of DTI for originated loans",
+       x = "Loan Origination Quarter",
+       y = "Debt-to-Income Ratio (%)") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 13),
+    legend.position = "bottom"
+  )
+```
+
+```{r plotloanpurpose, fig.width=8, fig.height=5, echo = FALSE, fig.cap="Plot3"}
+purpose_data <- combined_data %>%
+  filter(PURPOSE %in% c("P", "C", "R")) %>%
+  mutate(PURPOSE = recode(PURPOSE,"P" = "Purchase",
+                   "C" = "Cash-Out Refinance","R" = "Rate-Term Refinance"))
+
+ggplot(purpose_data, aes(x = PURPOSE, fill = Year)) +
+  geom_bar(position = "dodge", color = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("2007Q4" = "#E76F51", "2019Q4" = "#2A9D8F")) +
+  labs(title = "Loan Purpose Breakdown",
+       subtitle = "Types of loans originated in 2007 vs 2019",
+       x = "Loan Purpose",
+       y = "Number of Loans",
+       fill = "Origination Year") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", size = 18),
+        plot.subtitle = element_text(size = 14),
+        axis.title.x = element_text(size = 14, margin = margin(t = 12)),
+        axis.title.y = element_text(size = 14, margin = margin(r = 12)),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        panel.grid.major = element_line(color = "gray80", size = 0.4, linetype = "dotted"),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(color = "black"),
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 12),
+        legend.position = "bottom") +
+  scale_x_discrete(expand = c(0.0, 0)) +
+  scale_y_continuous(expand = c(0, 0))
+```
+
+```{r violinplot, echo = FALSE, fig.cap="Plot4"}
+combined_data$Bank <- case_when(
+  combined_data$SELLER == "Bank Of America, N.A." ~ "Bank of America",
+  combined_data$SELLER == "JPMorgan Chase Bank, National Association" ~ "JPMorgan")
+combined_data <- combined_data %>%
+  filter(!is.na(Bank))
+
+ggplot(combined_data, aes(x = Bank, y = DTI, fill = Bank)) +
+  geom_violin() +
+  scale_fill_manual(values = c("JPMorgan" = "#E76F51", "Bank of America" = "#2A9D8F")) +
+  labs(title = "Debt-to-Income Ratio (DTI) Distribution: JPMorgan vs Bank of America",
+       x = "SELLER",y = "Debt-to-Income Ratio (DTI)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 16),
+    axis.title.x = element_text(size = 14, margin = margin(t = 15)),
+    axis.title.y = element_text(size = 14, margin = margin(r = 15)),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray90"),
+    panel.grid.minor = element_line(color = "gray90"),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 13),
+    legend.position = "none")
+```
+
+```{r animatets, message=FALSE, warning=FALSE, echo = FALSE, , fig.cap="Plot5"}
+ts_data$Year <- as.integer(ts_data$Year)
+gif <- ggplot(ts_data, aes(x = Date, y = `Default rate`)) +
+  geom_line(color = "#1f77b4", size = 1.5) +
+  geom_point(color = "#1f77b4", size = 2) +
+  geom_vline(xintercept = as.Date("2008-01-01"), linetype = "dashed", color = "red",size = 1) +
+  annotate("text",
+         x = as.Date("2009-01-01"),
+         y = 0.005,
+         label = "2008",
+         color = "red",
+         fontface = "bold",
+         vjust = 1.2)+
+  scale_x_date(limits = range(ts_data$Date), expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(title = "Quarterly Default Rate Over Time: {frame_along}", x = "Year", 
+       y = "Default Rates") +
+  theme_light(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    panel.grid.major = element_line(color = "gray80"),
+    panel.grid.minor = element_line(color = "gray90"),
+    axis.line = element_line(color = "black")) +
+  transition_reveal(Year)
+
+# Animate it
+#anim_save("default_rate_animation.gif", gif)
+animate(gif, nframes = 50)
+```
+
+```{r interactive-map, fig.width=8, fig.height=5, echo=FALSE, fig.width=10, fig.height=7, echo = FALSE, fig.cap="Plot6"}
+stateData <- stateData %>%
+  arrange(desc(total_defaults)) %>%
+  mutate(rank = row_number())
+
+usMapData <- usmap::us_map(regions = "states", include = NULL)
+mapData <- left_join(usMapData, stateData, by = c("full" = "state"))
+
+loanDefaultsPlot <- ggplot(data = mapData) +
+  geom_sf_interactive(aes(fill = total_defaults,tooltip = default_label,data_id = abbr),
+                      color = "white") +
+  scale_fill_gradient(name = "Loan Defaults", low = "grey80", high = "red") +
+  labs(title = "Loan Defaults by State") +
+  theme_void() +
+  theme(legend.position = "right",legend.key.size = unit(0.3, 'cm'),
+        plot.title = element_text(hjust = 0.5, margin = margin(t = 0, b = 10)),
+  plot.margin = margin(t = 0, r = 10, b = 10, l = 10))
+
+girafe(ggobj = loanDefaultsPlot, options = list(opts_tooltip(css = "background-color: white; 
+                   padding: 6px; border: 1px solid black; border-radius: 4px;")))
+```
